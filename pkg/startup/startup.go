@@ -204,6 +204,9 @@ func Run() {
 		// Configure the node AS number.
 		configureASNumber(node)
 
+		// Configure BGP password if needed.
+		configureBGPPassword(node)
+
 		if clientset != nil {
 			log.Info("Setting NetworkUnavailable to False")
 			err = setNodeNetworkUnavailableFalse(*clientset, nodeName)
@@ -773,6 +776,23 @@ func configureASNumber(node *api.Node) {
 			log.Info("No AS number configured on node resource, using global value")
 		} else {
 			log.Infof("Using AS number %s configured in node resource", node.Spec.BGP.ASNumber)
+		}
+	}
+}
+
+// configureBGPPassword configures the Node resource with the BGP password specified
+// in the environment, or is a no-op if not specified.
+func configureBGPPassword(node *api.Node) {
+	// Extract the BGP password from the environment
+	password := os.Getenv("BGPPASSWORD")
+	if password != "" {
+		log.Infof("Using BGP password specified in environment (BGPPASSWORD=****)")
+		node.Spec.BGP.Password = password
+	} else {
+		if node.Spec.BGP.Password == "" {
+			log.Info("No BGP password configured on node resource, using global value if present")
+		} else {
+			log.Info("Using BGP password **** configured in node resource")
 		}
 	}
 }
